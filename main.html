@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="kr">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <table>
+        <tr>
+            <td>이름: </td>
+            <td id="nameSpace" class="infoSpace"></td>
+        </tr>
+        <tr>
+            <td>나이: </td>
+            <td id="ageSpace" class="infoSpace"></td>
+        </tr>
+        <tr>
+            <td>이메일: </td>
+            <td id="emailSpace" class="infoSpace"></td>
+        </tr>
+        <tr>
+            <td>가입일: </td>
+            <td id="sinceSpace" class="infoSpace"></td>
+        </tr>
+    </table>
+    <input type="button" value="로그아웃" onclick="logout()">
+    <input type="button" value="정보 수정" onclick="mvEditInfo()">
+
+    <script>
+        window.onload = () => {
+            fetch("/account", {
+                method: "GET"
+            })
+            .then((response) => {
+                return response.json()
+            })
+            .then((response) => {
+                console.log(response);
+                document.getElementById("nameSpace").innerHTML = response.name;
+                document.getElementById("ageSpace").innerHTML = response.age;
+                document.getElementById("emailSpace").innerHTML = response.email;
+                document.getElementById("sinceSpace").innerHTML = response.since;
+            });
+        }
+
+        const deleteCookie = (name) => {
+            document.cookie = name + "=; expires=Thu, 01 Jan 1999 00:00:10 GMT;";
+        }
+
+        const logout = () => {
+            deleteCookie("accountSeq");
+            location.href = "/..";
+        }
+        
+        const mvEditInfo = () => {
+            location.href = "/editInfo";
+        }
+
+    </script>
+</body>
+</html>
