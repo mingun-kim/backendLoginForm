@@ -51,6 +51,7 @@
 
         const logout = () => {
             deleteCookie("accountSeq");
+            deleteCookie("accountToken");
             location.href = "/..";
         }
         

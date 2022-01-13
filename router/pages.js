@@ -5,6 +5,7 @@ const router = express.Router(); //api 담당 클래스
 const path = require("path");
 const logModule = require("./logModule");
 const reqIp = require("request-ip");
+const jwt = require("jsonwebtoken");
 
 //API
 router.get("", (req, res) => {//req: 사용자가 보내는 res:사용자가 받는
@@ -14,9 +15,11 @@ router.get("", (req, res) => {//req: 사용자가 보내는 res:사용자가 받
 });
 
 router.get("/main", (req, res) => {
-    if (req.cookies.accountSeq == req.sessionID) {
+    try {
+        req.decoded = jwt.verify(req.cookies.accountToken, "stanleyParable");//decoded안 내부적 기능실행
+        // console.log(req.decoded);
         res.sendFile(path.join(__dirname, "../main.html"));
-    } else {
+    }catch(err) {
         res.sendFile(path.join(__dirname, "../index.html"));
     }
     logModule("mainPage/get", reqIp.getClientIp(req), {}, {});
@@ -30,18 +33,22 @@ router.get("/signUp", (req, res) => {//req: 사용자가 보내는 res:사용자
 });
 
 router.get("/editInfo", (req, res) => {
-    if (req.cookies.accountSeq == req.sessionID) {
+    try {
+        req.decoded = jwt.verify(req.cookies.accountToken, "stanleyParable");//decoded안 내부적 기능실행
+        // console.log(req.decoded);
         res.sendFile(path.join(__dirname, "../editInfo.html"));
-    } else {
+    }catch(err) {
         res.sendFile(path.join(__dirname, "../index.html"));
     }
     logModule("editInfoPage/get", reqIp.getClientIp(req), {}, {});
 })
 
 router.get("/changePw", (req, res) => {
-    if (req.cookies.accountSeq == req.sessionID) {
+    try {
+        req.decoded = jwt.verify(req.cookies.accountToken, "stanleyParable");//decoded안 내부적 기능실행
+        // console.log(req.decoded);
         res.sendFile(path.join(__dirname, "../changePw.html"));
-    } else {
+    }catch(err) {
         res.sendFile(path.join(__dirname, "../index.html"));
     }
     logModule("changePwPage/get", reqIp.getClientIp(req), {}, {});

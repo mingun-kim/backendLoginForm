@@ -3,8 +3,17 @@ const router = express.Router(); //api 담당 클래스
 const logModule = require("./logModule");
 const reqIp = require("request-ip");
 const pgInit = require("../pgConn");
+
 const jwt = require("jsonwebtoken");
-const nodeFetch = require("node-fetch");
+// const fetch = require("node-fetch");
+// const https = require("https");
+// const httpsAgent = new https.Agent({
+//     rejectUnauthorized: false,
+//     keepAlive: true
+// })
+const axios = require("axios");
+// 환경변수로 node에서 허가되지 않은 인증TLS통신을 거부하지 않겠다고 설정
+// process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 const pg = require("pg");
 const client = pg.Client;
@@ -84,7 +93,6 @@ router.post("", (req, res) => {
     let pwValue = req.body.pw;
     let param = [idValue, pwValue]
     let tokenSeq = [];
-
     let result = {
         "accountSuccess": false,
         "infoSuccess": false,
@@ -115,57 +123,63 @@ router.post("", (req, res) => {
             console.log(req.session);
             res.cookie("accountSeq", req.sessionID);
 
-            nodeFetch.fetch("/account", {
-                "method": "GET"
-            })
-            .then((response) => response.json())
-            .then((response) => {
-                console.log(response);
-                const jwtToken = jwt.sign(
-                response,
-                "stanleyParable", //private key 마음대로 지정
-                {//형식 정해짐, 내용 맘대로
-                    expiresIn: "1d",
-                    issuer: "nidel"
-                });
-                res.cookie("accountToken", jwtToken);
-                let inputData = {
-                    id: idValue,
-                    pw: pwValue
-                }
-                logModule("account/post", reqIp.getClientIp(req), inputData, response);
-                pgConn.end();
-            })
-
-            // testQuery = "SELECT * FROM secondsch.user_info WHERE seq=$1";
+            // const url = "https://" + req.headers.host + "/account";
             
-            // pgConn.query(testQuery, tokenSeq, (err, tokenRs) => {
-            //     console.log(tokenRs.rows);
-            //     if (tokenRs.rows.length) {
-            //         result.infoSuccess = true;
-            //         if (result.accountSuccess && result.infoSuccess) {
-            //             result.success = true;
-            //         }
-
-            //         const jwtToken = jwt.sign(
-            //         tokenRs.rows[0]
-            //         ,
-            //         "stanleyParable", //private key 마음대로 지정
-            //         {//형식 정해짐, 내용 맘대로
-            //             expiresIn: "1d",
-            //             issuer: "nidel"
-            //         });
-            //         res.cookie("accountToken", jwtToken);
-            //     }
-            //     res.send(result);
+            // axios(url, {
+            //     method: "GET",
+            //     agent: httpsAgent
+            // })
+            // .then((response) => response.json())
+            // .then((response) => {
+            //     console.log(response);
+            //     const jwtToken = jwt.sign(
+            //     response,
+            //     "stanleyParable", //private key 마음대로 지정
+            //     {//형식 정해짐, 내용 맘대로
+            //         expiresIn: "1d",
+            //         issuer: "nidel"
+            //     });
+            //     res.cookie("accountToken", jwtToken);
             //     let inputData = {
             //         id: idValue,
             //         pw: pwValue
             //     }
-            //     logModule("account/post", reqIp.getClientIp(req), inputData, result);
+            //     logModule("account/post", reqIp.getClientIp(req), inputData, response);
             //     pgConn.end();
-
             // })
+            // .catch((err) => {
+            //     console.log(err);
+            // })
+
+            testQuery = "SELECT * FROM secondsch.user_info WHERE seq=$1";
+            
+            pgConn.query(testQuery, tokenSeq, (err, tokenRs) => {
+                console.log(tokenRs.rows);
+                if (tokenRs.rows.length) {
+                    result.infoSuccess = true;
+                    if (result.accountSuccess && result.infoSuccess) {
+                        result.success = true;
+                    }
+
+                    tokenRs.rows[0].id = results.rows[0].id;
+                    const jwtToken = jwt.sign(
+                    tokenRs.rows[0],
+                    "stanleyParable", //private key 마음대로 지정
+                    {//형식 정해짐, 내용 맘대로
+                        expiresIn: "1d",
+                        issuer: "nidel"
+                    });
+                    res.cookie("accountToken", jwtToken);
+                }
+                res.send(result);
+                let inputData = {
+                    id: idValue,
+                    pw: pwValue
+                }
+                logModule("account/post", reqIp.getClientIp(req), inputData, result);
+                pgConn.end();
+
+            })
         }
     });
 
