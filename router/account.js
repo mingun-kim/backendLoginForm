@@ -11,50 +11,70 @@ const jwt = require("jsonwebtoken");
 //     rejectUnauthorized: false,
 //     keepAlive: true
 // })
-const axios = require("axios");
+// const axios = require("axios");
 // 환경변수로 node에서 허가되지 않은 인증TLS통신을 거부하지 않겠다고 설정
 // process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 const pg = require("pg");
 const client = pg.Client;
 
+const jwtAuth = require("./jwtAuth");
+
 router.get("", (req, res) => {
-    let outputData = null;
-    const pgConn = new client(pgInit);
-    
-    pgConn.connect((err) => {
-        if (err) {
-            console.log("ERROR", err);
-            res.send(result);
-        }
-    })
-    
-    if (req.cookies.accountSeq == req.sessionID) {
-        let testQuery = "SELECT * FROM secondsch.user_info WHERE seq=$1";
-        let param = [req.session.accountSeq];
-
-        pgConn.query(testQuery, param, (err, results) => {
-            let result = {
-                "success": false
-            };
-            if (results.rows.length) {
-                result = {
-                    "success": true
-                };
-                console.log("check");
-                results.rows[0].accountId = req.session.accountId;
-                res.send(results.rows[0]);
-                outputData = result;
-            }
-            logModule("account/get", reqIp.getClientIp(req), {}, outputData);
-            pgConn.end();
-
-        });
+    if (jwtAuth == false) {
+        res.send(false);
     }
+
+    let outputData = null;
+
+    if (req.cookies.accountToken != null) {
+        let rsToken = jwt.verify(req.cookies.accountToken, "stanleyParable");
+        outputData = rsToken;
+        res.send(rsToken);
+    } else {
+
+        const pgConn = new client(pgInit);
     
+        pgConn.connect((err) => {
+            if (err) {
+                console.log("ERROR", err);
+                res.send(result);
+            }
+        })
+        
+        if (req.cookies.accountSeq == req.sessionID) {
+            let testQuery = "SELECT * FROM secondsch.user_info WHERE seq=$1";
+            let param = [req.session.accountSeq];
+    
+            pgConn.query(testQuery, param, (err, results) => {
+                let result = {
+                    "success": false
+                };
+                if (results.rows.length) {
+                    result = {
+                        "success": true
+                    };
+                    console.log("check");
+                    results.rows[0].accountId = req.session.accountId;
+                    res.send(results.rows[0]);
+                    outputData = result;
+                }
+                pgConn.end();
+    
+            });
+        }
+    }
+    logModule("account/get", reqIp.getClientIp(req), {}, outputData);
+
 });
 
 router.get("/id", (req, res) => {
+    let result = {
+        success: false
+    }
+    if (jwtAuth == false) {
+        res.send(result);
+    }
     let idValue = req.query.id;
     let param = [idValue];
     let inputValue = {
@@ -72,7 +92,7 @@ router.get("/id", (req, res) => {
     let testQuery = "SELECT * FROM secondsch.account WHERE id=$1";
     
     pgConn.query(testQuery, param, (err, results) => {
-        let result = {
+        result = {
             "success": false
         };
         if (results.rows.length == 0) {
@@ -98,6 +118,9 @@ router.post("", (req, res) => {
         "infoSuccess": false,
         "success": false
     };
+    if (jwtAuth == false) {
+        res.send(result);
+    };
 
     const pgConn = new client(pgInit);
         
@@ -118,6 +141,7 @@ router.post("", (req, res) => {
             if (req.session) {
                 req.session.accountSeq = results.rows[0].seq;
                 req.session.accountId = results.rows[0].id;
+                req.session.nowIp = reqIp.getClientIp(req);
                 tokenSeq = [results.rows[0].seq];
             }
             console.log(req.session);
@@ -201,6 +225,9 @@ router.post("/signUp", (req, res) => {
         "loginSuccess": false,
         "infoSuccess": false
     };
+    if (jwtAuth == false) {
+        res.send(success);
+    }
 
     if (idValue.length > 20 || pwValue.length > 20 || nameValue.length > 7 || ageValue.length > 3 || emailValue.length > 30) {
         console.log("ERROR invalid data insert");
@@ -251,6 +278,12 @@ router.put("", (req, res) => {
     let paramLogin = [idValue, req.session.accountSeq];
     let paramInfo = [nameValue, ageValue, emailValue, req.session.accountSeq];
     const pgConn = new client(pgInit);
+    let result = {
+        success: false
+    }
+    if (jwtAuth == false) {
+        res.send(result);
+    }
     
     pgConn.connect((err) => {
         if (err) {
@@ -299,6 +332,9 @@ router.put("/password", (req, res) => {
     let rs = {
         "success": false
     };
+    if (jwtAuth == false) {
+        res.send(rs);
+    }
     const pgConn = new client(pgInit);
     
     pgConn.connect((err) => {
@@ -338,6 +374,12 @@ router.put("/password", (req, res) => {
 
 router.delete("", (req, res) => {
     const pgConn = new client(pgInit);
+    let result = {
+        success: false
+    }
+    if (jwtAuth == false) {
+        res.send(result);
+    }
     
     pgConn.connect((err) => {
         if (err) {

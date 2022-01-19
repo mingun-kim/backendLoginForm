@@ -18,7 +18,11 @@ router.get("/main", (req, res) => {
     try {
         req.decoded = jwt.verify(req.cookies.accountToken, "stanleyParable");//decoded안 내부적 기능실행
         // console.log(req.decoded);
-        res.sendFile(path.join(__dirname, "../main.html"));
+        if (reqIp.getClientIp(req) != req.session.nowIp) {
+            res.sendFile(path.join(__dirname, "../index.html"));
+        } else {
+            res.sendFile(path.join(__dirname, "../main.html"));
+        }
     }catch(err) {
         res.sendFile(path.join(__dirname, "../index.html"));
     }
