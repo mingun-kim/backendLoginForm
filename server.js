@@ -51,6 +51,9 @@ app.use("/", pages);
 let account = require("./router/account");
 app.use("/account", account);
 
+const elastic = require("./router/elastic");
+app.use("/elastic", elastic);
+
 https.createServer(options, app).listen(httpsPort, (req, res) => {
     console.log("https server is started at port" + httpsPort);
 });

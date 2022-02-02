@@ -5,6 +5,11 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <style>
+        .td {
+            border: solid 1px;
+        }
+    </style>
 </head>
 <body>
     <table>
@@ -27,6 +32,74 @@
     </table>
     <input type="button" value="로그아웃" onclick="logout()">
     <input type="button" value="정보 수정" onclick="mvEditInfo()">
+    <br>
+    <span id="visits">방문수: </span><input type="button" value="출석" onclick="attendance()">
+    <br>
+    <textarea cols="50" rows="10" id="memo"></textarea>
+    <input type="text" id="memoTag">
+    <input type="button" value="작성" onclick="memoInsert()">
+    <br>
+    <input type="text" id="memoSearch">
+    <input type="button" value="검색" onclick="memoSearch()">
+    <br>
+    <input type="button" value="연결 확인" onclick="connTest()">
+    <table>
+        <tr>
+            <td class="td">작성자</td>
+            <td class="td">내용</td>
+            <td class="td">태그</td>
+        </tr>
+        <tr>
+            <td class="td" id="td00"></td>
+            <td class="td" id="td01"></td>
+            <td class="td" id="td02"></td>
+        </tr>
+        <tr>
+            <td class="td" id="td10"></td>
+            <td class="td" id="td11"></td>
+            <td class="td" id="td12"></td>
+        </tr>
+        <tr>
+            <td class="td" id="td20"></td>
+            <td class="td" id="td21"></td>
+            <td class="td" id="td22"></td>
+        </tr>
+        <tr>
+            <td class="td" id="td30"></td>
+            <td class="td" id="td31"></td>
+            <td class="td" id="td32"></td>
+        </tr>
+        <tr>
+            <td class="td" id="td40"></td>
+            <td class="td" id="td41"></td>
+            <td class="td" id="td42"></td>
+        </tr>
+        <tr>
+            <td class="td" id="td50"></td>
+            <td class="td" id="td51"></td>
+            <td class="td" id="td52"></td>
+        </tr>
+        <tr>
+            <td class="td" id="td60"></td>
+            <td class="td" id="td61"></td>
+            <td class="td" id="td62"></td>
+        </tr>
+        <tr>
+            <td class="td" id="td70"></td>
+            <td class="td" id="td71"></td>
+            <td class="td" id="td72"></td>
+        </tr>
+        <tr>
+            <td class="td" id="td80"></td>
+            <td class="td" id="td81"></td>
+            <td class="td" id="td82"></td>
+        </tr>
+        <tr>
+            <td class="td" id="td90"></td>
+            <td class="td" id="td91"></td>
+            <td class="td" id="td92"></td>
+        </tr>
+    </table>
 
     <script>
         window.onload = () => {
@@ -42,6 +115,15 @@
                 document.getElementById("ageSpace").innerHTML = response.age;
                 document.getElementById("emailSpace").innerHTML = response.email;
                 document.getElementById("sinceSpace").innerHTML = response.since;
+            });
+            fetch("/account/visits", {
+                method: "GET"
+            })
+            .then((response) => {
+                return response.json()
+            })
+            .then((response) => {
+                document.getElementById("visits").innerHTML += response.visits;
             });
         }
 
@@ -59,6 +141,73 @@
             location.href = "/editInfo";
         }
 
+        const attendance = () => {
+            fetch("/account/attendance", {
+                method: "POST"
+            })
+            .then((response) => {
+                return response.json()
+            })
+            .then((response) => {
+                if(response.success) {
+                    alert("출석체크 성공!");
+                } else {
+                    alert("이미 체크되어있습니다.");
+                }
+            });
+        }
+
+        const memoInsert = () => {
+            fetch("elastic", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    "memo": document.getElementById("memo").value,
+                    "tag": document.getElementById("memoTag").value
+                })
+            })
+            .then((response) => response.json())
+            .then(response => {
+                if (response.success) {
+                    console.log("insert success");
+                } else {
+                    console.log("insert fail");
+                }
+            });
+        }
+
+        const memoSearch = () => {
+            const data = document.getElementById("memoSearch").value;
+            for (let i = 0; i < 10; i++) {
+                document.getElementById("td" + i + "0").innerHTML = "";
+                document.getElementById("td" + i + "1").innerHTML = "";
+                document.getElementById("td" + i + "2").innerHTML = "";
+            }
+            fetch("elastic?data=" + data)
+            .then((response) => response.json())
+            .then(response => {
+                if (response.success) {
+                    console.log(response.list);
+                    for (let i = 0; i < response.list.length; i++) {
+                        document.getElementById("td" + i + "0").innerHTML = response.list[i]._source.writer;
+                        document.getElementById("td" + i + "1").innerHTML = response.list[i]._source.memo.replace(/\n/g, "<br>");
+                        document.getElementById("td" + i + "2").innerHTML = response.list[i]._source.tag;
+                    }
+                } else {
+                    console.log("search fail");
+                }
+            });
+        }
+
+        const connTest = () => {
+            fetch("elastic/connect")
+            .then((response) => response.json())
+            .then(response => {
+                console.log(response.status);
+            })
+        }
     </script>
 </body>
 </html>

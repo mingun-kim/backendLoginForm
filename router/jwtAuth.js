@@ -1,10 +1,11 @@
 const jwt = require("jsonwebtoken");
-let jwtAuth = true;
-
-try {
-    jwt.verify(req.cookies.accountToken, "stanleyParable");
-} catch(err) {
-    jwtAuth = false;
+const jwtAuth = (cookie) => {
+    try {
+        jwt.verify(cookie, "stanleyParable");
+        return true;
+    } catch(err) {
+        return false;
+    }
 }
 
 module.exports = jwtAuth;
